@@ -12,7 +12,7 @@ export async function authRoutes(app: FastifyInstance) {
     const { code } = bodySchema.parse(request.body)
 
     const redirectURI = process.env.NODE_ENV === 'production'
-      ? 'https://musical-project.vercel.app/api/auth/callback'
+      ? 'https://musicall-project.vercel.app/api/auth/callback'
       : 'http://localhost:3000/api/auth/callback'
 
     console.log(redirectURI)
