@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/server.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "(.*)",
+      "dest": "src/server.ts"
+    }
+  ],
+  "buildCommand": "npm run build && npx prisma migrate deploy",
+  "installCommand": "npm ci",
+  "outputDirectory": "dist"
+}
