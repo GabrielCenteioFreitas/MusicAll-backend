@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import fastify from "fastify";
 import { authRoutes } from "./routes/auth";
+import { playlistsRoutes } from "./routes/playlists";
 
 const app = fastify();
 
@@ -17,6 +18,7 @@ app.register(jwt, {
 });
 
 app.register(authRoutes);
+app.register(playlistsRoutes);
 
 app
   .listen({

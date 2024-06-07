@@ -8,9 +8,94 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  googleId  String   @unique
+  id        String     @id @default(uuid())
+  googleId  String     @unique
   name      String
   avatarUrl String
+  createdAt DateTime   @default(now())
+  playlists Playlist[]
+
+  @@map("users")
+}
+
+model Song {
+  id       String @id @default(uuid())
+  iTunesId Int    @unique
+  artistId String
+  albumId  String
+
+  name              String
+  iTunesViewUrl     String   @unique
+  portrait          String
+  previewUrl        String   @unique
+  releaseDate       DateTime
+  durationInSeconds Int
+  genre             String
+  createdAt         DateTime @default(now())
+
+  artist    Artist         @relation(fields: [artistId], references: [id])
+  album     Album          @relation(fields: [albumId], references: [id])
+  playlists SongPlaylist[]
+
+  @@map("songs")
+}
+
+model SongPlaylist {
+  id         String   @id @default(uuid())
+  songId     String
+  playlistId String
+  addedAt    DateTime @default(now())
+
+  song     Song     @relation(fields: [songId], references: [id])
+  playlist Playlist @relation(fields: [playlistId], references: [id])
+
+  @@map("songs_playlists")
+}
+
+model Playlist {
+  id     String @id @default(uuid())
+  userId String
+
+  name      String
+  portrait  String?
+  isPublic  Boolean  @default(true)
   createdAt DateTime @default(now())
+
+  user  User           @relation(fields: [userId], references: [id])
+  songs SongPlaylist[]
+
+  @@map("playlists")
+}
+
+model Artist {
+  id       String @id @default(uuid())
+  iTunesId Int    @unique
+
+  name          String
+  iTunesViewUrl String   @unique
+  genre         String
+  createdAt     DateTime @default(now())
+
+  albums Album[]
+  songs  Song[]
+
+  @@map("artists")
+}
+
+model Album {
+  id       String @id @default(uuid())
+  iTunesId Int    @unique
+  artistId String
+
+  name          String
+  iTunesViewUrl String   @unique
+  portrait      String
+  releaseDate   DateTime
+  genre         String
+  createdAt     DateTime @default(now())
+
+  songs  Song[]
+  artist Artist @relation(fields: [artistId], references: [id])
+
+  @@map("albums")
 }
