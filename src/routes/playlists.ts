@@ -85,7 +85,7 @@ export async function playlistsRoutes(app: FastifyInstance) {
         userId: request.user.sub,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
       include: {
         user: {
@@ -118,6 +118,30 @@ export async function playlistsRoutes(app: FastifyInstance) {
     });
   });
 
+  app.post("/playlists", async (request) => {
+    await request.jwtVerify();
+
+    const bodySchema = z.object({
+      userId: z.string(),
+      name: z.string(),
+      isPublic: z.boolean(),
+    });
+
+    const { name, userId, isPublic } = bodySchema.parse(request.body);
+
+    const playlist = await prisma.playlist.create({
+      data: {
+        name,
+        isPublic,
+        user: {
+          connect: { id: userId },
+        },
+      },
+    });
+
+    return playlist;
+  });
+
   app.get("/playlists/:id", async (request, reply) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
@@ -144,12 +168,14 @@ export async function playlistsRoutes(app: FastifyInstance) {
                 artist: {
                   select: {
                     id: true,
+                    iTunesId: true,
                     name: true,
                   }
                 },
                 album: {
                   select: {
                     id: true,
+                    iTunesId: true,
                     name: true,
                   }
                 },              
@@ -167,34 +193,12 @@ export async function playlistsRoutes(app: FastifyInstance) {
     await request.jwtVerify()
 
     if (playlist?.userId === request.user.sub) {
+      console.log(JSON.stringify(playlist))
+      
       return playlist
     }
 
     return reply.status(403).send('Acesso não permitido');
-  });
-
-  app.post("/playlists", async (request) => {
-    await request.jwtVerify();
-
-    const bodySchema = z.object({
-      userId: z.string(),
-      name: z.string(),
-      isPublic: z.boolean(),
-    });
-
-    const { name, userId, isPublic } = bodySchema.parse(request.body);
-
-    const playlist = await prisma.playlist.create({
-      data: {
-        name,
-        isPublic,
-        user: {
-          connect: { id: userId },
-        },
-      },
-    });
-
-    return playlist;
   });
 
   app.put("/playlists/:id", async (request) => {
@@ -210,117 +214,11 @@ export async function playlistsRoutes(app: FastifyInstance) {
       name: z.string(),
       portrait: z.string().nullish(),
       isPublic: z.boolean(),
-      newSong: z
-        .object({
-          name: z.string(),
-          portrait: z.string().url(),
-          iTunesId: z.number(),
-          iTunesViewUrl: z.string().url(),
-          artist: z.object({
-            name: z.string(),
-            iTunesId: z.number(),
-            iTunesViewUrl: z.string().url(),
-            genre: z.string(),
-          }),
-          album: z.object({
-            name: z.string(),
-            portrait: z.string().url(),
-            iTunesId: z.number(),
-            iTunesViewUrl: z.string().url(),
-            releaseDate: z.string(),
-            genre: z.string(),
-          }),
-          previewUrl: z.string().url(),
-          releaseDate: z.string(),
-          durationInSeconds: z.number(),
-          genre: z.string(),
-        })
-        .optional(),
-    });
+    })
 
-    const { name, portrait, isPublic, newSong } = bodySchema.parse(request.body);
-    let playlist = {};
+    const { name, portrait, isPublic } = bodySchema.parse(request.body);
 
-    if (newSong) {
-      let artist = await prisma.artist.findUnique({
-        where: {
-          iTunesId: newSong.artist.iTunesId,
-        },
-      });
-
-      if (!artist) {
-        artist = await prisma.artist.create({
-          data: {
-            name: newSong.artist.name,
-            iTunesId: newSong.artist.iTunesId,
-            iTunesViewUrl: newSong.artist.iTunesViewUrl,
-            genre: newSong.artist.genre,
-          },
-        });
-      }
-
-      let album = await prisma.album.findUnique({
-        where: {
-          iTunesId: newSong.album.iTunesId,
-        },
-      });
-
-      if (!album) {
-        album = await prisma.album.create({
-          data: {
-            name: newSong.album.name,
-            portrait: newSong.album.portrait,
-            iTunesId: newSong.album.iTunesId,
-            iTunesViewUrl: newSong.album.iTunesViewUrl,
-            genre: newSong.album.genre,
-            releaseDate: newSong.album.releaseDate,
-            artist: {
-              connect: { id: artist.id },
-            },
-          },
-        });
-      }
-
-      let song = await prisma.song.findUnique({
-        where: {
-          iTunesId: newSong.iTunesId,
-        },
-      });
-
-      if (!song) {
-        song = await prisma.song.create({
-          data: {
-            name: newSong.name,
-            portrait: newSong.portrait,
-            iTunesId: newSong.iTunesId,
-            iTunesViewUrl: newSong.iTunesViewUrl,
-            artist: {
-              connect: { id: artist.id },
-            },
-            album: {
-              connect: { id: album.id },
-            },
-            previewUrl: newSong.previewUrl,
-            releaseDate: newSong.releaseDate,
-            durationInSeconds: newSong.durationInSeconds,
-            genre: newSong.genre,
-          },
-        });
-      }
-
-      await prisma.songPlaylist.create({
-        data: {
-          song: {
-            connect: { id: song.id },
-          },
-          playlist: {
-            connect: { id },
-          },
-        },
-      });
-    }
-
-    playlist = await prisma.playlist.update({
+    const playlist = await prisma.playlist.update({
       where: {
         id,
         userId: request.user.sub,
@@ -333,8 +231,169 @@ export async function playlistsRoutes(app: FastifyInstance) {
     });
 
     return {
-      playlist,
-      newSong,
+      playlist
+    }
+  })
+
+  app.post("/playlists/:id/songs", async (request) => {
+    await request.jwtVerify();
+
+    const paramsSchema = z.object({
+      id: z.string().uuid(),
+    });
+
+    const { id } = paramsSchema.parse(request.params);
+
+    const bodySchema = z.object({
+      newSong: z.object({
+        name: z.string(),
+        portrait: z.string().url(),
+        iTunesId: z.number(),
+        iTunesViewUrl: z.string().url(),
+        artist: z.object({
+          name: z.string(),
+          iTunesId: z.number(),
+          iTunesViewUrl: z.string().url(),
+          genre: z.string(),
+        }),
+        album: z.object({
+          name: z.string(),
+          portrait: z.string().url(),
+          iTunesId: z.number(),
+          iTunesViewUrl: z.string().url(),
+          releaseDate: z.string(),
+          genre: z.string(),
+        }),
+        previewUrl: z.string().url(),
+        releaseDate: z.string(),
+        durationInSeconds: z.number(),
+        genre: z.string(),
+      })
+    });
+
+    const { newSong } = bodySchema.parse(request.body);
+
+    let artist = await prisma.artist.findUnique({
+      where: {
+        iTunesId: newSong.artist.iTunesId,
+      },
+    });
+
+    if (!artist) {
+      artist = await prisma.artist.create({
+        data: {
+          name: newSong.artist.name,
+          iTunesId: newSong.artist.iTunesId,
+          iTunesViewUrl: newSong.artist.iTunesViewUrl,
+          genre: newSong.artist.genre,
+        },
+      });
+    }
+
+    let album = await prisma.album.findUnique({
+      where: {
+        iTunesId: newSong.album.iTunesId,
+      },
+    });
+
+    if (!album) {
+      album = await prisma.album.create({
+        data: {
+          name: newSong.album.name,
+          portrait: newSong.album.portrait,
+          iTunesId: newSong.album.iTunesId,
+          iTunesViewUrl: newSong.album.iTunesViewUrl,
+          genre: newSong.album.genre,
+          releaseDate: newSong.album.releaseDate,
+          artist: {
+            connect: { id: artist.id },
+          },
+        },
+      });
+    }
+
+    let song = await prisma.song.findUnique({
+      where: {
+        iTunesId: newSong.iTunesId,
+      },
+    });
+
+    if (!song) {
+      song = await prisma.song.create({
+        data: {
+          name: newSong.name,
+          portrait: newSong.portrait,
+          iTunesId: newSong.iTunesId,
+          iTunesViewUrl: newSong.iTunesViewUrl,
+          artist: {
+            connect: { id: artist.id },
+          },
+          album: {
+            connect: { id: album.id },
+          },
+          previewUrl: newSong.previewUrl,
+          releaseDate: newSong.releaseDate,
+          durationInSeconds: newSong.durationInSeconds,
+          genre: newSong.genre,
+        },
+      });
+    }
+
+    const addedSong = await prisma.songPlaylist.create({
+      data: {
+        song: {
+          connect: { id: song.id },
+        },
+        playlist: {
+          connect: { id },
+        },
+      },
+    });
+
+    return {
+      addedSong
     };
   });
+
+  app.delete("/playlists/:id/songs", async (request, reply) => {
+    await request.jwtVerify();
+
+    const paramsSchema = z.object({
+      id: z.string().uuid(),
+    });
+
+    const { id } = paramsSchema.parse(request.params);
+
+    const bodySchema = z.object({
+      songToRemove: z.object({
+        id: z.string(),
+      })
+    })
+
+    const { songToRemove } = bodySchema.parse(request.body);
+
+    const songPlaylistEntry = await prisma.songPlaylist.findUnique({
+      where: {
+        id: songToRemove.id,
+        playlistId: id,
+        playlist: {
+          userId: request.user.sub,
+        },
+      }
+    });
+
+    if (!songPlaylistEntry) {
+      reply.status(404).send('Música não encontrada.')
+    }
+
+    const removedSong = await prisma.songPlaylist.delete({
+      where: {
+        id: songPlaylistEntry?.id
+      }
+    });
+
+    return {
+      removedSong
+    };
+  })
 }
