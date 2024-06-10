@@ -103,6 +103,48 @@ export async function playlistsRoutes(app: FastifyInstance) {
     return playlist;
   });
 
+  app.delete("/playlists/:id", async (request, reply) => {
+    await request.jwtVerify();
+
+    const paramsSchema = z.object({
+      id: z.string().uuid(),
+    });
+
+    const { id } = paramsSchema.parse(request.params)
+
+    const playlistToDelete = await prisma.playlist.findUnique({
+      where: {
+        id,
+        userId: request.user.sub,
+      }
+    })
+
+    if (!playlistToDelete) {
+      reply.status(404).send('Not found or unauthorized user')
+    }
+
+    const deletedSongs = await prisma.songPlaylist.deleteMany({
+      where: {
+        playlist: {
+          id,
+          userId: request.user.sub,
+        }
+      }
+    })
+
+    const deletedPlaylist = await prisma.playlist.delete({
+      where: {
+        id,
+        userId: request.user.sub,
+      }
+    });
+
+    return {
+      deletedPlaylist,
+      deletedSongs
+    };
+  });
+
   app.get("/playlists/:id", async (request, reply) => {
     const paramsSchema = z.object({
       id: z.string().uuid(),
