@@ -56,10 +56,13 @@ model Playlist {
   id     String @id @default(uuid())
   userId String
 
-  name      String
-  portrait  String?
-  isPublic  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  name        String
+  description String?
+  portrait    String?
+  isPublic    Boolean  @default(true)
+  isFixed     Boolean  @default(false)
+  fixedAt     DateTime?
+  createdAt   DateTime @default(now())
 
   user  User           @relation(fields: [userId], references: [id])
   songs SongPlaylist[]

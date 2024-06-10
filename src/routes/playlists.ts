@@ -43,9 +43,6 @@ export async function playlistsRoutes(app: FastifyInstance) {
       where: {
         userId: request.user.sub,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
       include: {
         user: {
           select: {
@@ -66,11 +63,29 @@ export async function playlistsRoutes(app: FastifyInstance) {
       },
     });
 
+    playlists.sort((a, b) => {
+      const isFixedA = a.isFixed && a.fixedAt;
+      const isFixedB = b.isFixed && b.fixedAt;
+    
+      if (isFixedA && isFixedB) {
+        const dateA = new Date(a.fixedAt!);
+        const dateB = new Date(b.fixedAt!);
+        return dateB.getTime() - dateA.getTime();
+      } else if (!isFixedA && !isFixedB) {
+        const dateA = new Date(a.createdAt!);
+        const dateB = new Date(b.createdAt!);
+        return dateB.getTime() - dateA.getTime();
+      } else {
+        return isFixedA ? -1 : 1;
+      }
+    });
+
     return {
       playlists: playlists.map((playlist) => {
         return {
           id: playlist.id,
           name: playlist.name,
+          isFixed: playlist.isFixed,
           portrait: playlist.portrait,
           user: playlist.user,
           songs: playlist.songs,
@@ -212,12 +227,16 @@ export async function playlistsRoutes(app: FastifyInstance) {
     const { id } = paramsSchema.parse(request.params);
 
     const bodySchema = z.object({
-      name: z.string(),
-      portrait: z.string().nullish(),
-      isPublic: z.boolean(),
+      name: z.string().optional(),
+      description: z.string().optional(),
+      portrait: z.string().optional(),
+      isPublic: z.boolean().optional(),
+      isFixed: z.boolean().optional(),
+      fixedAt: z.string().nullable().optional(),
     })
 
-    const { name, portrait, isPublic } = bodySchema.parse(request.body);
+    const { name, description, portrait, isPublic, isFixed, fixedAt } = bodySchema.parse(request.body);
+    const fixedAtDate = fixedAt ? new Date(fixedAt) : fixedAt === null ? null : undefined
 
     const playlist = await prisma.playlist.update({
       where: {
@@ -226,8 +245,11 @@ export async function playlistsRoutes(app: FastifyInstance) {
       },
       data: {
         name,
+        description,
         portrait,
         isPublic,
+        isFixed,
+        fixedAt: fixedAtDate,
       },
     });
 
