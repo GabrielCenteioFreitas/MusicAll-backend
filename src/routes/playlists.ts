@@ -3,78 +3,37 @@ import { z } from 'zod';
 import { prisma } from "../lib/prisma";
 
 export async function playlistsRoutes(app: FastifyInstance) {
-  app.get("/playlists", async (request) => {
-    let playlists;
-
-    try {
-      await request.jwtVerify()
-
-      playlists = await prisma.playlist.findMany({
-        where: {
-          OR: [
-            { isPublic: true },
-            { isPublic: false, userId: request.user.sub },
-          ],
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
-              id: true,
-            },
+  app.get("/playlists", async () => {
+    const playlists = await prisma.playlist.findMany({
+      where: {
+        isPublic: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
           },
-          songs: {
-            select: {
-              song: {
-                select: {
-                  portrait: true,
-                  iTunesId: true,
-                }
+        },
+        songs: {
+          select: {
+            song: {
+              select: {
+                portrait: true
               }
             }
           }
-        },
-      });
-    } catch {
-      playlists = await prisma.playlist.findMany({
-        where: {
-          isPublic: true,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        include: {
-          user: {
-            select: {
-              name: true,
-              id: true,
-            },
-          },
-          songs: {
-            select: {
-              song: {
-                select: {
-                  portrait: true
-                }
-              }
-            }
-          }
-        },
-      });
-    }
-  
-    return playlists.map((playlist) => {
-      return {
-        id: playlist.id,
-        name: playlist.name,
-        portrait: playlist.portrait,
-        user: playlist.user,
-        songs: playlist.songs,
-      };
+        }
+      },
     });
+  
+    return {
+      playlists,
+    }
   });
 
   app.get("/playlists/user", async (request) => {
@@ -107,15 +66,17 @@ export async function playlistsRoutes(app: FastifyInstance) {
       },
     });
 
-    return playlists.map((playlist) => {
-      return {
-        id: playlist.id,
-        name: playlist.name,
-        portrait: playlist.portrait,
-        user: playlist.user,
-        songs: playlist.songs,
-      };
-    });
+    return {
+      playlists: playlists.map((playlist) => {
+        return {
+          id: playlist.id,
+          name: playlist.name,
+          portrait: playlist.portrait,
+          user: playlist.user,
+          songs: playlist.songs,
+        };
+      })
+    }
   });
 
   app.post("/playlists", async (request) => {
@@ -192,9 +153,7 @@ export async function playlistsRoutes(app: FastifyInstance) {
 
     await request.jwtVerify()
 
-    if (playlist?.userId === request.user.sub) {
-      console.log(JSON.stringify(playlist))
-      
+    if (playlist?.userId === request.user.sub) {      
       return playlist
     }
 
