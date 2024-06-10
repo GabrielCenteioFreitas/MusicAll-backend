@@ -16,8 +16,6 @@ export async function authRoutes(app: FastifyInstance) {
         ? "https://musicall-project.vercel.app/api/auth/callback"
         : "http://localhost:3000/api/auth/callback";
 
-    console.log(redirectURI);
-
     const accessTokenResponse = await axios
       .post(
         "https://oauth2.googleapis.com/token",
