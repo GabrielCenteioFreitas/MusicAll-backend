@@ -100,14 +100,16 @@ export async function playlistsRoutes(app: FastifyInstance) {
     const bodySchema = z.object({
       userId: z.string(),
       name: z.string(),
+      description: z.string().nullable(),
       isPublic: z.boolean(),
     });
 
-    const { name, userId, isPublic } = bodySchema.parse(request.body);
+    const { name, description, userId, isPublic } = bodySchema.parse(request.body);
 
     const playlist = await prisma.playlist.create({
       data: {
         name,
+        description,
         isPublic,
         user: {
           connect: { id: userId },
