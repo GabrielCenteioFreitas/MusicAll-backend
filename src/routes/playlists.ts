@@ -182,6 +182,9 @@ export async function playlistsRoutes(app: FastifyInstance) {
           }
         },
         songs: {
+          orderBy: {
+            addedAt: 'asc',
+          },
           include: {
             song: {
               include: {
