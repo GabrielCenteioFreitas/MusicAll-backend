@@ -278,6 +278,10 @@ export async function playlistsRoutes(app: FastifyInstance) {
         portrait: z.string().url(),
         iTunesId: z.number(),
         iTunesViewUrl: z.string().url(),
+        previewUrl: z.string().url(),
+        releaseDate: z.string(),
+        durationInSeconds: z.number(),
+        genre: z.string(),
         artist: z.object({
           name: z.string(),
           iTunesId: z.number(),
@@ -292,10 +296,6 @@ export async function playlistsRoutes(app: FastifyInstance) {
           releaseDate: z.string(),
           genre: z.string(),
         }),
-        previewUrl: z.string().url(),
-        releaseDate: z.string(),
-        durationInSeconds: z.number(),
-        genre: z.string(),
       })
     });
 
@@ -346,7 +346,29 @@ export async function playlistsRoutes(app: FastifyInstance) {
       },
     });
 
-    if (!song) {
+    if (song) {
+      song = await prisma.song.update({
+        where: {
+          id: song.id
+        },
+        data: {
+          name: newSong.name,
+          portrait: newSong.portrait,
+          iTunesId: newSong.iTunesId,
+          iTunesViewUrl: newSong.iTunesViewUrl,
+          artist: {
+            connect: { id: artist.id },
+          },
+          album: {
+            connect: { id: album.id },
+          },
+          previewUrl: newSong.previewUrl,
+          releaseDate: newSong.releaseDate,
+          durationInSeconds: newSong.durationInSeconds,
+          genre: newSong.genre,
+        },
+      });
+    } else {
       song = await prisma.song.create({
         data: {
           name: newSong.name,

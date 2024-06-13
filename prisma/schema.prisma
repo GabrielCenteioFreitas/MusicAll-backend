@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  googleId  String     @unique
-  name      String
-  avatarUrl String
-  createdAt DateTime   @default(now())
-  playlists Playlist[]
+  id              String                @id @default(uuid())
+  googleId        String                @unique
+  name            String
+  avatarUrl       String
+  createdAt       DateTime              @default(now())
+  playlists       Playlist[]
+  favoriteSongs   UserFavoriteSongs[]
+  favoriteArtists UserFavoriteArtists[]
+  favoriteAlbums  UserFavoriteAlbums[]
 
   @@map("users")
 }
@@ -33,9 +36,10 @@ model Song {
   genre             String
   createdAt         DateTime @default(now())
 
-  artist    Artist         @relation(fields: [artistId], references: [id])
-  album     Album          @relation(fields: [albumId], references: [id])
-  playlists SongPlaylist[]
+  artist            Artist              @relation(fields: [artistId], references: [id])
+  album             Album               @relation(fields: [albumId], references: [id])
+  playlists         SongPlaylist[]
+  usersWhoFavorited UserFavoriteSongs[]
 
   @@map("songs")
 }
@@ -59,10 +63,10 @@ model Playlist {
   name        String
   description String?
   portrait    String?
-  isPublic    Boolean  @default(true)
-  isFixed     Boolean  @default(false)
+  isPublic    Boolean   @default(true)
+  isFixed     Boolean   @default(false)
   fixedAt     DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   user  User           @relation(fields: [userId], references: [id])
   songs SongPlaylist[]
@@ -79,8 +83,9 @@ model Artist {
   genre         String
   createdAt     DateTime @default(now())
 
-  albums Album[]
-  songs  Song[]
+  albums            Album[]
+  songs             Song[]
+  usersWhoFavorited UserFavoriteArtists[]
 
   @@map("artists")
 }
@@ -97,8 +102,45 @@ model Album {
   genre         String
   createdAt     DateTime @default(now())
 
-  songs  Song[]
-  artist Artist @relation(fields: [artistId], references: [id])
+  songs             Song[]
+  artist            Artist               @relation(fields: [artistId], references: [id])
+  usersWhoFavorited UserFavoriteAlbums[]
 
   @@map("albums")
+}
+
+model UserFavoriteSongs {
+  id          String   @id @default(uuid())
+  userId      String
+  songId      String
+  favoritedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  song Song @relation(fields: [songId], references: [id])
+
+  @@map("user_favorite_songs")
+}
+
+model UserFavoriteArtists {
+  id          String   @id @default(uuid())
+  userId      String
+  artistId    String
+  favoritedAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  artist Artist @relation(fields: [artistId], references: [id])
+
+  @@map("user_favorite_artists")
+}
+
+model UserFavoriteAlbums {
+  id          String   @id @default(uuid())
+  userId      String
+  albumId     String
+  favoritedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  album Album @relation(fields: [albumId], references: [id])
+
+  @@map("user_favorite_albums")
 }
