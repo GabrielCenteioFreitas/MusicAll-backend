@@ -16,9 +16,13 @@ export async function favoritesRoutes(app: FastifyInstance) {
             song: {
               include: {
                 artist: true,
+                album: true,
               },
             },
-          }
+          },
+          orderBy: {
+            favoritedAt: 'desc',
+          },
         },
         favoriteAlbums: {
           include: {
@@ -27,12 +31,18 @@ export async function favoritesRoutes(app: FastifyInstance) {
                 artist: true,
               },
             },
-          }
+          },
+          orderBy: {
+            favoritedAt: 'desc',
+          },
         },
         favoriteArtists: {
           include: {
             artist: true,
-          }
+          },
+          orderBy: {
+            favoritedAt: 'desc',
+          },
         },
       }
     })
