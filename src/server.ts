@@ -6,6 +6,7 @@ import fastify from "fastify";
 import { authRoutes } from "./routes/auth";
 import { playlistsRoutes } from "./routes/playlists";
 import { favoritesRoutes } from "./routes/favorites";
+import { usersRoutes } from "./routes/users";
 
 const app = fastify();
 
@@ -20,7 +21,8 @@ app.register(jwt, {
 
 app.register(authRoutes);
 app.register(playlistsRoutes);
-app.register(favoritesRoutes)
+app.register(favoritesRoutes);
+app.register(usersRoutes);
 
 app
   .listen({
