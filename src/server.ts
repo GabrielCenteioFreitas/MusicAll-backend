@@ -7,6 +7,7 @@ import { authRoutes } from "./routes/auth";
 import { playlistsRoutes } from "./routes/playlists";
 import { favoritesRoutes } from "./routes/favorites";
 import { usersRoutes } from "./routes/users";
+import { songsRoutes } from "./routes/songs";
 
 const app = fastify();
 
@@ -23,6 +24,7 @@ app.register(authRoutes);
 app.register(playlistsRoutes);
 app.register(favoritesRoutes);
 app.register(usersRoutes);
+app.register(songsRoutes);
 
 app
   .listen({
