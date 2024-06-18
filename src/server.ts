@@ -17,7 +17,6 @@ app.register(cors, {
 
 app.register(jwt, {
   secret: "musicall-backend-gabrielcenteiofreitas",
-  // uma forma de diferenciar os jwts gerados desse backend de outros backends, pode colocar QUALQUER coisa
 });
 
 app.register(authRoutes);

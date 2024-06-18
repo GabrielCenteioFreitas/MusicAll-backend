@@ -19,7 +19,7 @@ export async function authRoutes(app: FastifyInstance) {
     const accessTokenResponse = await axios
       .post(
         "https://oauth2.googleapis.com/token",
-        null, // body
+        null,
         {
           params: {
             client_id: process.env.GOOGLE_CLIENT_ID,
@@ -31,7 +31,7 @@ export async function authRoutes(app: FastifyInstance) {
           headers: {
             Accept: "application/json",
           },
-        }, // config
+        },
       )
       .catch((error) => {
         console.log(error);
@@ -100,10 +100,10 @@ export async function authRoutes(app: FastifyInstance) {
       {
         name: user.name,
         avatarUrl: user.avatarUrl,
-      }, // no primeiro {} os dados q queremos q sejam públicos
+      },
       {
-        sub: user.id, // sub vem de subject e é o que identifica o usuário, no caso o id
-        expiresIn: "30 days", // em quanto tempo o token vai expirar
+        sub: user.id,
+        expiresIn: "30 days",
       },
     );
 
