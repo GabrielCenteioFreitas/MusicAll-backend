@@ -36,6 +36,7 @@ export async function usersRoutes (app: FastifyInstance) {
             song: {
               include: {
                 artist: true,
+                album: true,
               },
             },
           },
