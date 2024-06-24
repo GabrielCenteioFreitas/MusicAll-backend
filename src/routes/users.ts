@@ -68,7 +68,7 @@ export async function usersRoutes (app: FastifyInstance) {
     })
 
     if (!user) {
-      return reply.status(404).send('Usuário não encontrado');
+      return reply.status(404).send({error: 'Usuário não encontrado'});
     }
 
     const { name, avatarUrl, createdAt, playlists, favoriteSongs, favoriteAlbums, favoriteArtists } = user
