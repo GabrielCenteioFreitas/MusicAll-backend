@@ -80,7 +80,7 @@ Caso queira ver o projeto, clique [aqui](https://musicall-project.vercel.app/).
 
 ## 🚀 Tecnologias
 
-O front-end desse projeto foi desenvolvido com as seguintes tecnologias:
+O back-end desse projeto foi desenvolvido com as seguintes tecnologias:
 
 - NodeJS
 - Fastify
